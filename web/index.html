@@ -1,0 +1,101 @@
+<body>
+<!-- https://code.jquery.com/ -->
+<form>
+    <input required type="text" name="title" placeholder="Title">
+    <input type="text" name="author" placeholder="Name">
+    <input type="text" name="publisher" placeholder="Publisher">
+    <input type="submit" value="Add">
+</form>
+
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script>
+    var body = $('body');
+
+    $('form').on('submit',function (event) {
+        event.preventDefault();
+
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            'type': "POST",
+            'url':'http://localhost:8282/books/add',
+            'data':JSON.stringify({
+                'author':event.target.author.value,
+                'publisher':event.target.publisher.value,
+                'title':event.target.title.value
+            })
+        }).done(function (data) {
+            console.log(data);
+            location.reload();
+        }).fail(function (xhr,status,error) {
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+            body.css('background-color','purple');
+            body.html("<h2>Tragic Catastrophe</h2>");
+        });
+    });
+
+    $.get('http://localhost:8282/books').done(function (data) {
+        console.log(data);
+        console.log(data.length);
+        for(var i=0; i<data.length; i++) {
+            body.append("<h1 data-id='"+
+                +data[i].id
+                +"'>"
+                +data[i].title
+                +"</h1><a data-id='"+
+                +data[i].id
+                +"' class='delete'>Delete</a><div></div>");
+            console.log(i);
+
+        }
+        $('div').hide();
+
+        $('h1').one('click',function (event) {
+            var h1 = $(event.target);
+            var id = h1.data('id');
+
+            $.get('http://localhost:8282/books/'+id).done(
+                function (data) {
+                    var div = h1.next();
+                    div.append("<p>"+data.author+"</p>");
+                    div.append("<p>"+data.publisher+"</p>");
+                    div.fadeIn();
+                }
+            )
+        });
+
+        console.log($('a.delete'));
+        $('a.delete').on('click',function (event) {
+            var id = $(event.target).data('id');
+            console.log(id);
+            console.log(event.target);
+            $.ajax({
+                'url': 'http://localhost:8282/books/remove/'+id,
+                'type': "DELETE"
+            }).done(function () {
+                console.log("ok");
+                setTimeout(function () {
+                    location.reload();
+                },100)
+//
+            }).fail(function (xhr,status,error) {
+                console.log(xhr);
+                console.log(status);
+                console.log(error);
+            });
+        })
+
+    }).fail(function () {
+        body.css('background-color','red');
+        body.append("<h1>Server unavailable!!!</h1>")
+    });
+
+
+
+
+</script>
+</body>
